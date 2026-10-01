@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.google.android.permissioncontroller" bounds="[60,800][1020,1700]">
+    <node text="Allow Maps to access this device's location?" resource-id="com.android.permissioncontroller:id/permission_message" class="android.widget.TextView" package="com.google.android.permissioncontroller" bounds="[120,860][960,1000]" />
+    <node text="While using the app" resource-id="com.android.permissioncontroller:id/permission_allow_foreground_only_button" class="android.widget.Button" package="com.google.android.permissioncontroller" clickable="true" bounds="[120,1300][960,1400]" />
+    <node text="Only this time" resource-id="com.android.permissioncontroller:id/permission_allow_one_time_button" class="android.widget.Button" package="com.google.android.permissioncontroller" clickable="true" bounds="[120,1420][960,1520]" />
+    <node text="Don’t allow" resource-id="com.android.permissioncontroller:id/permission_deny_button" class="android.widget.Button" package="com.google.android.permissioncontroller" clickable="true" bounds="[120,1540][960,1640]" />
+  </node>
+</hierarchy>

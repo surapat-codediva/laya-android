@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.contacts" bounds="[0,0][1080,2400]">
+    <node text="Search contacts" resource-id="com.example.contacts:id/search" class="android.widget.EditText" package="com.example.contacts" clickable="true" focusable="true" bounds="[40,120][1040,240]" />
+    <node resource-id="com.example.contacts:id/chips" class="androidx.recyclerview.widget.RecyclerView" package="com.example.contacts" scrollable="true" bounds="[0,260][1080,380]">
+      <node text="Favorites" class="android.widget.CheckBox" package="com.example.contacts" checkable="true" checked="true" clickable="true" bounds="[40,270][320,370]" />
+      <node text="Work" class="android.widget.CheckBox" package="com.example.contacts" checkable="true" checked="false" clickable="true" bounds="[340,270][560,370]" />
+    </node>
+    <node resource-id="com.example.contacts:id/contact_list" class="androidx.recyclerview.widget.RecyclerView" package="com.example.contacts" scrollable="true" bounds="[0,400][1080,2200]">
+      <node class="android.widget.LinearLayout" package="com.example.contacts" clickable="true" bounds="[0,400][1080,560]"><node text="Alice Wong" class="android.widget.TextView" package="com.example.contacts" bounds="[160,430][1040,530]" /></node>
+      <node class="android.widget.LinearLayout" package="com.example.contacts" clickable="true" bounds="[0,560][1080,720]"><node text="Bob Chan" class="android.widget.TextView" package="com.example.contacts" bounds="[160,590][1040,690]" /></node>
+      <node class="android.widget.LinearLayout" package="com.example.contacts" clickable="true" bounds="[0,720][1080,880]"><node text="Bluetooth Speaker Support" class="android.widget.TextView" package="com.example.contacts" bounds="[160,750][1040,850]" /></node>
+    </node>
+    <node class="android.widget.ScrollView" package="com.example.contacts" scrollable="true" bounds="[0,2200][1080,2400]" />
+  </node>
+</hierarchy>

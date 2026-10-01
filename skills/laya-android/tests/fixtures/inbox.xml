@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.mail" bounds="[0,0][1080,2400]">
+    <node class="android.widget.LinearLayout" package="com.example.mail" bounds="[0,100][1080,260]">
+      <node text="Mail" class="android.widget.TextView" package="com.example.mail" bounds="[40,130][700,230]" />
+      <node resource-id="com.example.mail:id/delete_button" class="android.widget.ImageButton" package="com.example.mail" content-desc="Delete" clickable="true" bounds="[900,130][1040,230]" />
+    </node>
+    <node text="Deleted items are kept for 30 days" class="android.widget.TextView" package="com.example.mail" bounds="[40,280][1040,340]" />
+    <node class="android.widget.ListView" package="com.example.mail" scrollable="true" bounds="[0,360][1080,2400]">
+      <node class="android.widget.LinearLayout" package="com.example.mail" clickable="true" bounds="[0,360][1080,520]"><node text="Inbox" class="android.widget.TextView" package="com.example.mail" bounds="[40,390][1040,490]" /></node>
+      <node class="android.widget.LinearLayout" package="com.example.mail" clickable="true" bounds="[0,520][1080,680]"><node text="Promotions" class="android.widget.TextView" package="com.example.mail" bounds="[40,550][1040,650]" /></node>
+    </node>
+  </node>
+</hierarchy>

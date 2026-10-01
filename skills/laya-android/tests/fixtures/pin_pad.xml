@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.bank" bounds="[0,0][1080,2400]">
+    <node text="Enter your PIN" class="android.widget.TextView" package="com.example.bank" bounds="[40,300][1040,400]" />
+    <node class="android.widget.GridLayout" package="com.example.bank" bounds="[0,1200][1080,2200]">
+      <node text="1" class="android.widget.Button" package="com.example.bank" clickable="true" bounds="[0,1200][360,1450]" />
+      <node text="2" class="android.widget.Button" package="com.example.bank" clickable="true" bounds="[360,1200][720,1450]" />
+      <node text="3" class="android.widget.Button" package="com.example.bank" clickable="true" bounds="[720,1200][1080,1450]" />
+      <node text="Cancel" class="android.widget.Button" package="com.example.bank" clickable="true" bounds="[0,1950][360,2200]" />
+    </node>
+  </node>
+</hierarchy>

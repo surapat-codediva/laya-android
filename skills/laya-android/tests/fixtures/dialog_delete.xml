@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.gallery" bounds="[60,900][1020,1500]">
+    <node text="Delete 3 photos?" resource-id="android:id/alertTitle" class="android.widget.TextView" package="com.example.gallery" bounds="[120,960][960,1040]" />
+    <node text="These items will be removed from all your devices." resource-id="android:id/message" class="android.widget.TextView" package="com.example.gallery" bounds="[120,1060][960,1200]" />
+    <node resource-id="android:id/buttonPanel" class="android.widget.LinearLayout" package="com.example.gallery" bounds="[120,1300][960,1440]">
+      <node text="Cancel" resource-id="android:id/button2" class="android.widget.Button" package="com.example.gallery" clickable="true" bounds="[400,1320][660,1420]" />
+      <node text="OK" resource-id="android:id/button1" class="android.widget.Button" package="com.example.gallery" clickable="true" bounds="[680,1320][940,1420]" />
+    </node>
+  </node>
+</hierarchy>

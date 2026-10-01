@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.shop" bounds="[0,0][1080,2400]">
+    <node text="Shop" class="android.widget.TextView" package="com.example.shop" bounds="[40,80][1040,180]" />
+    <node resource-id="com.example.shop:id/product_list" class="androidx.recyclerview.widget.RecyclerView" package="com.example.shop" scrollable="true" bounds="[0,200][1080,2400]">
+      <node resource-id="com.example.shop:id/product_card" class="android.widget.LinearLayout" package="com.example.shop" bounds="[0,200][1080,600]">
+        <node text="iPhone Case A" resource-id="com.example.shop:id/name" class="android.widget.TextView" package="com.example.shop" bounds="[40,220][700,300]" />
+        <node text="฿199" resource-id="com.example.shop:id/price" class="android.widget.TextView" package="com.example.shop" bounds="[40,320][700,380]" />
+        <node text="Buy" resource-id="com.example.shop:id/buy" class="android.widget.Button" package="com.example.shop" clickable="true" bounds="[760,400][1040,520]" />
+      </node>
+      <node resource-id="com.example.shop:id/product_card" class="android.widget.LinearLayout" package="com.example.shop" bounds="[0,600][1080,1000]">
+        <node text="iPhone Case B" resource-id="com.example.shop:id/name" class="android.widget.TextView" package="com.example.shop" bounds="[40,620][700,700]" />
+        <node text="฿159" resource-id="com.example.shop:id/price" class="android.widget.TextView" package="com.example.shop" bounds="[40,720][700,780]" />
+        <node text="Buy" resource-id="com.example.shop:id/buy" class="android.widget.Button" package="com.example.shop" clickable="true" bounds="[760,800][1040,920]" />
+      </node>
+      <node resource-id="com.example.shop:id/product_card" class="android.widget.LinearLayout" package="com.example.shop" bounds="[0,1000][1080,1400]">
+        <node text="iPhone Case C" resource-id="com.example.shop:id/name" class="android.widget.TextView" package="com.example.shop" bounds="[40,1020][700,1100]" />
+        <node text="฿99" resource-id="com.example.shop:id/price" class="android.widget.TextView" package="com.example.shop" bounds="[40,1120][700,1180]" />
+        <node text="Buy" resource-id="com.example.shop:id/buy" class="android.widget.Button" package="com.example.shop" clickable="true" bounds="[760,1200][1040,1320]" />
+      </node>
+    </node>
+  </node>
+</hierarchy>

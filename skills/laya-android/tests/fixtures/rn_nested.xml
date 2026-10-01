@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.rn" bounds="[0,0][1080,2400]">
+    <node class="android.view.ViewGroup" package="com.example.rn" bounds="[0,0][1080,2400]">
+      <node class="android.view.ViewGroup" package="com.example.rn" clickable="true" focusable="true" bounds="[0,300][1080,500]">
+        <node class="android.view.ViewGroup" package="com.example.rn" clickable="true" focusable="true" bounds="[0,300][1080,500]">
+          <node text="Orders" class="android.widget.TextView" package="com.example.rn" bounds="[40,320][600,400]" />
+          <node text="3 pending" class="android.widget.TextView" package="com.example.rn" bounds="[40,410][600,480]" />
+        </node>
+      </node>
+      <node class="android.view.ViewGroup" package="com.example.rn" clickable="true" bounds="[0,600][1080,800]">
+        <node text="Track parcel" class="android.widget.Button" package="com.example.rn" clickable="true" bounds="[0,600][1080,800]" />
+      </node>
+      <node resource-id="tab_home" class="android.view.ViewGroup" package="com.example.rn" content-desc="Home tab" clickable="true" bounds="[0,2200][540,2400]">
+        <node class="android.widget.ImageView" package="com.example.rn" bounds="[230,2230][310,2310]" />
+        <node text="Home" class="android.widget.TextView" package="com.example.rn" bounds="[200,2320][340,2380]" />
+      </node>
+      <node resource-id="tab_profile" class="android.view.ViewGroup" package="com.example.rn" clickable="true" selected="true" bounds="[540,2200][1080,2400]">
+        <node text="Profile" class="android.widget.TextView" package="com.example.rn" bounds="[740,2320][880,2380]" />
+      </node>
+    </node>
+  </node>
+</hierarchy>

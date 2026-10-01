@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<hierarchy rotation="0">
+  <node class="android.widget.FrameLayout" package="com.example.basic" bounds="[0,0][1080,2400]">
+    <node class="android.widget.LinearLayout" package="com.example.basic" bounds="[0,100][1080,2400]">
+      <node text="Sign up" class="android.widget.TextView" package="com.example.basic" bounds="[40,120][1040,220]" />
+      <node text="Email" class="android.widget.TextView" package="com.example.basic" bounds="[40,260][1040,320]" />
+      <node text="you@example.com" hint="Email address" resource-id="com.example.basic:id/email_input" class="android.widget.EditText" package="com.example.basic" clickable="true" focusable="true" focused="true" bounds="[40,330][1040,450]" />
+      <node class="android.widget.LinearLayout" package="com.example.basic" bounds="[40,480][1040,600]">
+        <node text="Subscribe to newsletter" class="android.widget.TextView" package="com.example.basic" bounds="[40,500][800,580]" />
+        <node text="OFF" resource-id="com.example.basic:id/newsletter_switch" class="android.widget.Switch" package="com.example.basic" checkable="true" checked="false" clickable="true" bounds="[860,500][1040,580]" />
+      </node>
+      <node text="Create account" resource-id="com.example.basic:id/submit" class="android.widget.Button" package="com.example.basic" clickable="true" bounds="[40,640][1040,760]" />
+      <node text="Terms apply" class="android.widget.TextView" package="com.example.basic" bounds="[40,800][1040,860]" />
+      <node text="Continue as guest" class="android.widget.Button" package="com.example.basic" clickable="true" enabled="false" bounds="[40,900][1040,1000]" />
+      <node text="" class="android.view.View" package="com.example.basic" clickable="true" bounds="[0,1100][0,1100]" />
+    </node>
+  </node>
+</hierarchy>
