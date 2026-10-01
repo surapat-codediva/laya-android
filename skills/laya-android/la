@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Runs laya_android.py with the skill's own venv (laya + torch).
+# First run creates the venv and installs requirements.txt (torch is large, takes a while).
+set -e
+dir="$(cd "$(dirname "$0")" && pwd)"
+if [ ! -x "$dir/.venv/bin/python" ]; then
+  py="${LAYA_PYTHON:-$(command -v python3)}"
+  [ -n "$py" ] || { echo "laya-android: python3 not found (set LAYA_PYTHON)" >&2; exit 2; }
+  echo "laya-android: first run, creating venv with $py ..." >&2
+  "$py" -m venv "$dir/.venv"
+  "$dir/.venv/bin/pip" install -q --upgrade pip >&2
+  "$dir/.venv/bin/pip" install -q -r "$dir/requirements.txt" >&2 || { rm -rf "$dir/.venv"; exit 2; }
+fi
+exec "$dir/.venv/bin/python" "$dir/laya_android.py" "$@"
