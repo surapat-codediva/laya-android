@@ -16,8 +16,8 @@ def device(monkeypatch):
     def use(*screens, transitions=None):
         holder["dev"] = FakeDevice(list(screens), transitions)
         return holder["dev"]
-    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda: "emulator-5554")
-    monkeypatch.setattr(cli.adb_mod, "Device", lambda serial: holder["dev"])
+    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda *a: "emulator-5554")
+    monkeypatch.setattr(cli.adb_mod, "Device", lambda serial, **kw: holder["dev"])
     return use
 
 
@@ -25,7 +25,7 @@ def device(monkeypatch):
 def laya(monkeypatch):
     def use(*answers):
         p = FakePredictor(answers)
-        monkeypatch.setattr(cli, "LazyLaya", lambda model: p)
+        monkeypatch.setattr(cli, "decision_client", lambda model, daemon=True: p)
         return p
     return use
 
@@ -104,8 +104,8 @@ def test_type_key_swipe(device, capsys):
 def test_type_non_ascii_is_a_usage_error(capsys, monkeypatch):
     real = cli.adb_mod.Device("x")
     monkeypatch.setattr(real, "adb", lambda *a: pytest.fail("adb must not run"))
-    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda: "x")
-    monkeypatch.setattr(cli.adb_mod, "Device", lambda serial: real)
+    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda *a: "x")
+    monkeypatch.setattr(cli.adb_mod, "Device", lambda serial, **kw: real)
     code, _, err = run(capsys, "type", "สวัสดี", "--no-screen")
     assert code == 2 and "ASCII-only" in err
 
@@ -215,15 +215,100 @@ def test_run_allow_category(device, laya, capsys):
 
 
 def test_device_errors_exit_2(monkeypatch, capsys):
-    def boom():
+    def boom(*a):
         raise DeviceError("no adb device")
     monkeypatch.setattr(cli.adb_mod, "pick_serial", boom)
     code, _, err = run(capsys, "screen")
     assert code == 2 and "no adb device" in err
 
     class Broken:
-        def observe(self):
+        def observe(self, signature=None):
             raise AdbError("adb not found on PATH")
-    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda: "x")
-    monkeypatch.setattr(cli.adb_mod, "Device", lambda serial: Broken())
+    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda *a: "x")
+    monkeypatch.setattr(cli.adb_mod, "Device", lambda serial, **kw: Broken())
     assert run(capsys, "screen")[0] == 2
+
+
+# ---------- Phase 3 ----------
+
+def test_tap_after_screen_takes_the_fast_path(device, capsys):
+    dev = device("settings", "settings_bt_on", transitions={"Bluetooth | Off": 1})
+    run(capsys, "screen")
+    code, out, err = run(capsys, "-v", "tap", "4")
+    assert code == 0 and dev.actions == [("tap", 540, 720)]
+    assert "path: fast" in err
+    assert dev.observations == 2  # `screen` and the screen printed after the tap: no re-dump before it
+    assert 'switch "switch_widget" [on]' in out  # adaptive settle, then the new screen
+
+
+def test_tap_after_the_screen_changed_takes_the_safe_path(device, capsys):
+    dev = device("settings", "settings_bt_on")
+    run(capsys, "screen")
+    dev.i = 1  # Bluetooth turned on by itself: same element, different screen
+    code, _, err = run(capsys, "-v", "tap", "4", "--no-screen")
+    assert code == 0 and "path: safe (screen_changed)" in err and dev.observations == 2
+
+
+def test_verbose_prints_timing_and_keeps_stdout_clean(device, capsys):
+    device("settings")
+    code, out, err = run(capsys, "-v", "screen", "--json")
+    json.loads(out)  # still valid JSON
+    assert "observe: " in err and "total: " in err and "adb calls: 0 (dumps 0, probes 0)  laya calls: 0" in err
+    code, out, err = run(capsys, "screen")
+    assert "total:" not in err
+
+
+def test_run_json_has_step_and_run_timing(device, laya, capsys):
+    device("settings", "settings_bt_on", transitions={"Bluetooth | Off": 1})
+    laya({"operation": ("CLICK", 0.9), "target": (pick('"Bluetooth | Off"'), 0.9)})
+    code, out, err = run(capsys, "-v", "run", "turn on bluetooth", "--until-text", "On", "--until-element",
+                         "Bluetooth | On")
+    d = json.loads(out)
+    assert code == 0 and d["steps"][0]["path"] == "fast" and d["steps"][0]["settle"]["status"] == "stable"
+    assert set(d["steps"][0]["timing_ms"]) >= {"observe", "decision", "policy", "execute", "settle", "total"}
+    assert d["timing"]["steps"] == 1 and d["timing"]["laya_calls_per_step"] == 1
+    assert "settle: stable" in err and "laya calls: 1" in err
+
+
+def test_no_daemon_flag_uses_in_process_laya(device, monkeypatch, capsys):
+    device("settings")
+    seen = []
+
+    def client(model, daemon=True):
+        seen.append((model, daemon))
+        return FakePredictor([{"q": 0.9}])
+    monkeypatch.setattr(cli, "decision_client", client)
+    run(capsys, "--no-daemon", "--model", "en", "check", "x?")
+    run(capsys, "check", "x?")
+    assert seen == [("en", False), ("ml", True)]
+
+
+def test_daemon_status_and_stop_need_no_device(monkeypatch, capsys):
+    monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda *a: pytest.fail("no device needed"))
+    code, out, _ = run(capsys, "daemon", "status")
+    assert code == 1 and json.loads(out)["daemon"] == "stopped"
+    code, out, _ = run(capsys, "daemon", "stop")
+    assert code == 0 and json.loads(out) == {"stopped": False}
+
+
+def test_benchmark_without_device(monkeypatch, capsys):
+    from laya_mobile import benchmark
+    monkeypatch.setattr(benchmark, "load_laya", lambda model: None)
+    monkeypatch.setattr(benchmark, "InProcessDecisionClient",
+                        lambda model: FakePredictor([{"operation": ("BACK", 0.5)}] * 10))
+    code, out, err = run(capsys, "--no-daemon", "benchmark", "--no-device", "--iterations", "3", "--json")
+    rep = json.loads(out)
+    assert code == 0 and rep["laya"]["mode"] == "in-process" and rep["laya"]["warm_ms"]["n"] == 3
+    assert rep["parse_ms"]["n"] == 3 and "device" not in rep
+    assert "Device: not measured" in err
+
+
+def test_device_info_is_cached_in_the_session(tmp_path):
+    from laya_mobile.adb import DeviceInfo
+    from laya_mobile.session import Session
+
+    class Dev:
+        _info = DeviceInfo(1080, 2400, 420, 132)
+    s = Session("emu")
+    s.remember_device(Dev())
+    assert Session.load("emu").device_info() == DeviceInfo(1080, 2400, 420, 132)

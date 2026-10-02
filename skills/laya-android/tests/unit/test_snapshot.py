@@ -20,7 +20,8 @@ def test_snapshot_fields():
 def test_snapshot_serializes_to_json_and_back():
     s = snap("duplicate_buy")
     d = json.loads(json.dumps(s.to_dict(), ensure_ascii=False))
-    assert set(d) == {"package", "activity", "fingerprint", "timestamp", "visible_text", "elements"}
+    assert set(d) == {"package", "activity", "fingerprint", "timestamp", "visible_text", "elements",
+                      "signature", "secure", "rotation"}  # Phase 3: freshness fields, additive
     assert d["elements"][1]["stable_key"] == s.elements[1].stable_key
     assert MobileSnapshot.from_dict(d) == s
 

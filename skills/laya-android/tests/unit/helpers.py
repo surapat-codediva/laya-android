@@ -1,5 +1,6 @@
 """Shared test helpers: fixture loading, a fake Laya and a fake device."""
 import os
+import time
 
 from laya_mobile.observe import snapshot_from_xml
 
@@ -57,18 +58,50 @@ def pick(text):
     return choose
 
 
+class FakeClock:
+    """A monotonic clock that only moves when sleep() is called: settle loops run instantly."""
+
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+    def sleep(self, s):
+        self.t += s
+
+
+def sig_of(snapshot):
+    """The fake screen signature: same screen content -> same signature, like a pixel hash."""
+    return "sig:" + snapshot.fingerprint
+
+
 class FakeDevice:
     """Serves saved screens. `screens` is the sequence observe() returns (the last repeats);
-    `on_tap` maps a stable label to the screen list index to switch to."""
+    `transitions` maps a stable label (or "swipe up", "key BACK") to the screen list index to
+    switch to. Counts full observations and cheap probes."""
 
     def __init__(self, screens, transitions=None):
         self.screens = [snap(s) if isinstance(s, str) else s for s in screens]
         self.i = 0
         self.transitions = transitions or {}
         self.actions = []
+        self.observations = 0
+        self.probes = 0
 
-    def observe(self):
+    def current(self):
         return self.screens[min(self.i, len(self.screens) - 1)]
+
+    def observe(self, signature=None):
+        self.observations += 1
+        s = self.current()
+        s.signature = sig_of(s)
+        s.timestamp = time.time()  # a fresh dump
+        return s
+
+    def probe(self):
+        self.probes += 1
+        return sig_of(self.current())
 
     def _advance(self, key):
         if key in self.transitions:
@@ -76,7 +109,7 @@ class FakeDevice:
 
     def tap(self, x, y):
         self.actions.append(("tap", x, y))
-        cur = self.observe()
+        cur = self.current()
         hit = [e for e in cur.elements if e.bounds[0] <= x < e.bounds[2] and e.bounds[1] <= y < e.bounds[3]]
         for e in sorted(hit, key=lambda e: (e.bounds[2] - e.bounds[0]) * (e.bounds[3] - e.bounds[1])):
             if e.label in self.transitions:

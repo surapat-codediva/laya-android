@@ -79,8 +79,10 @@ def snapshot_from_xml(xml, activity=None, timestamp=None):
     app_nodes = [n for n in nodes if n.get("package") != SYSTEMUI] or nodes
     app_els = [e for e in els if e.package != SYSTEMUI] or els
     fp = fingerprint(pkg, activity, [node_text(n) for n in app_nodes], app_els)
+    rot = root.get("rotation", "0")
     return MobileSnapshot(package=pkg, activity=activity, visible_text=visible_text(app_nodes), elements=els,
-                          fingerprint=fp, timestamp=round(time.time() if timestamp is None else timestamp, 3))
+                          fingerprint=fp, timestamp=round(time.time() if timestamp is None else timestamp, 3),
+                          rotation=int(rot) if rot.isdigit() else 0)
 
 
 def resolve(el, old, new):

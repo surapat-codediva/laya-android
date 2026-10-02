@@ -23,6 +23,13 @@ Below, `la` means `bash <skill-dir>/la`. The wrapper uses the skill's own venv; 
 run it creates `.venv` and installs `requirements.txt` (laya + torch, a few minutes — run it
 with a long timeout). Needs `python3` (override with `LAYA_PYTHON`) and `adb` on PATH.
 
+Laya runs in a **local daemon** that the first `pick`/`check`/`run` starts by itself. That first
+call takes ~10 s to load the model (much longer while it downloads, ~650 MB). After that, each
+Laya decision takes well under a second, across commands and terminals. You never need to manage the
+daemon. `la daemon status` shows it, and `la daemon stop` frees its memory; it also exits after
+30 idle minutes. If it cannot be started or keeps failing, the command exits `2` with the reason.
+That is a runtime error, not Laya being unsure.
+
 Device is picked automatically. Wireless debugging lists one phone twice (`ip:port` and
 `adb-<serial>-…._adb-tls-connect._tcp`); the script treats those as one device and uses the
 mDNS name (it survives port changes). With several real devices, pass `-s <serial>`.
@@ -44,11 +51,15 @@ If no device: on the phone open *Developer options → Wireless debugging*, then
 | `la pick "goal"` | Laya's next operation + element. Prints JSON, **does not act** | yes |
 | `la check "yes/no question"` | Laya P(true) about the screen. exit 0 yes / 1 no / 3 unsure | yes |
 | `la verify [--text T] [--package P] [--element L]` | Exact check of the current screen. exit 0 all met / 1 not; JSON lists what is missing | no |
-| `la run "goal" [--until-text T] [--until-package P] [--until-element L] [--max-steps 6] [--record]` | Loop: decide → gate → act, until done (0) or unsure/stuck/gated (3) | yes |
+| `la run "goal" [--until-text T] [--until-package P] [--until-element L] [--max-steps 6] [--record]` | Loop: decide → gate → act → settle, until done (0) or unsure/stuck/gated (3) | yes |
+| `la daemon start\|status\|stop` | The persistent Laya daemon (optional: it starts on demand) | — |
+| `la benchmark [--step] [--no-device]` | Measure Laya, adb, observation and settle latency. Never taps | yes |
 
 Global flags go before the command: `-s <serial>`, `--model ml|en`, `-v`/`--verbose` (diagnostics
-on stderr: fingerprint, candidate count, decision and confidence, policy result, screen changed;
-stdout stays machine-readable).
+on stderr: fingerprint, candidate count, decision and confidence, policy result, screen changed,
+fast/safe path, settle result, and per command or step `observe/decision/policy/execute/settle/total`
+ms with adb and Laya call counts; stdout stays machine-readable), `--no-daemon` (load Laya in this
+process, ~10 s per command; for debugging).
 
 Laya's operations are `CLICK`, `SCROLL_DOWN`, `SCROLL_UP`, `BACK`, `DONE`; it does not type.
 `pick`/`run` report `operation`, `op_confidence`, `target` (`id` + element), `target_confidence`,
@@ -74,15 +85,22 @@ Laya's done check (`--done "question"`, P ≥ `--yes`), which is a guess — avo
 
 Options: `--model ml` (multilingual, default — handles Thai UI) or `--model en`;
 `--min-confidence 0.6` for pick/run; `--yes 0.8` for check/run.
-First Laya call downloads ~650 MB and each invocation loads the model (several seconds);
-`run` loads it once for the whole loop.
+`run` JSON also has `timing` (steps, avg/p50/p95 step ms, calls per step), and each step has
+`timing_ms`, `settle` and, for taps, `path` (`fast` or `safe` + `safe_reason`). `run` hands off with
+reason `repeated_action_without_progress` when Laya would repeat the same action on the same
+screen a third time.
 
-**`tap`, `type`, `key` and `swipe` print the new screen** (same format as `screen`) after
-waiting `--wait 1.0` s for it to settle — that is your next observation, so don't call `screen`
-or `screenshot` after an action. `--no-screen` skips it.
+**`tap`, `type`, `key` and `swipe` print the new screen** (same format as `screen`) once it has
+settled — that is your next observation, so don't call `screen` or `screenshot` after an action.
+Settling is adaptive: a cheap on-device screen hash is polled until it holds still (a spinner or
+half-loaded page is waited out; a video or animation stops at ~2.5 s). `--wait N` waits exactly N
+seconds instead, e.g. for a slow network load. `--no-screen` skips it.
 
 **Element numbers are tied to a snapshot.** `tap N` refers to the last screen printed (by
-`screen`, an action, `pick` or `run`) and re-checks the screen before tapping. Elements are matched
+`screen`, an action, `pick` or `run`) and re-checks the screen before tapping. If the screen still
+looks exactly as it did when printed (a ~0.15 s hash instead of a ~2 s dump), the element is
+unambiguous and nothing on that screen is sensitive, it taps right away. Otherwise it re-reads
+the screen first (`-v` shows `path: fast` / `path: safe (reason)`). Elements are matched
 by their **stable key** (role + resource id + name + context + container, never position or N): if
 the element moved it taps its new position; if it is gone or ambiguous (identical elements and the
 screen changed) it does not tap, exits `4`, and prints the current screen to pick from. `run`
@@ -172,8 +190,19 @@ This matches the model card: base checkpoints are near random on unseen decision
   on such screens, and do those steps manually and deliberately, with the user's go-ahead.
 - `type` sends text through `adb shell input`; don't type secrets the user hasn't provided.
 
+## Speed
+
+Every observation is a `uiautomator dump`, which takes ~2 s by itself (it starts a JVM and waits
+for 1 s of UI quiet). That is the floor of this approach. So:
+- Read the screen an action prints. Don't run `screen` again after an action, and use
+  `screenshot` only when the text is not enough.
+- `pick` → `tap N` on the screen `pick` printed takes the fast path. So does `screen` → `tap N`.
+- `la benchmark --step` shows where the time goes on the current device. `BENCHMARKS.md` in the
+  repository has measured before/after numbers.
+
 ## Development
 
 `pytest` in this folder runs the unit tests on saved UIAutomator XML (`tests/fixtures/`) with a
-fake Laya — no device, no model download (`pip install -r requirements-dev.txt`).
+fake Laya — no device, no model download (`pip install -r requirements-dev.txt`). Daemon tests
+spawn a real daemon process with a fake model.
 `pytest tests/device --device` adds read-only smoke tests against a connected device.

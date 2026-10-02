@@ -1,4 +1,6 @@
-"""Laya decisions. The predictor is anything with Laya's `predict(state, questions)`; tests pass a fake."""
+"""Laya decisions. The predictor is anything with Laya's `predict(state, questions)` -- a
+DecisionClient (in-process or the persistent daemon) or, in tests, a fake. Every question a
+step needs (operation, tap target, done) goes into one predict call: one forward pass."""
 from __future__ import annotations
 
 import os
@@ -28,14 +30,38 @@ def load_laya(model):
     return _models[model]
 
 
-class LazyLaya:
-    """Loads the checkpoint on the first predict(), so a run that is already done never loads it."""
+class InProcessDecisionClient:
+    """Laya inside this process. Loads the checkpoint on the first predict(), so a run that is
+    already done never loads it. For --no-daemon, tests and debugging."""
 
     def __init__(self, model):
         self.model = model
 
     def predict(self, state, questions):
         return load_laya(self.model).predict(state, questions)
+
+
+LazyLaya = InProcessDecisionClient  # Phase 2 name
+
+
+class DaemonDecisionClient:
+    """Laya in the persistent local daemon (laya_mobile.daemon), started on first use."""
+
+    def __init__(self, model, client=None):
+        from .daemon import DaemonClient
+        self.model = model
+        self.client = client or DaemonClient()
+
+    def predict(self, state, questions):
+        return self.client.predict(self.model, state, questions)
+
+
+def decision_client(model, daemon=True):
+    """The predictor the CLI uses: the daemon unless disabled (--no-daemon) or unsupported."""
+    import socket
+    if daemon and hasattr(socket, "AF_UNIX"):
+        return DaemonDecisionClient(model)
+    return InProcessDecisionClient(model)
 
 
 def laya_state(snapshot, history):
@@ -74,7 +100,7 @@ def decide(predictor, goal, snapshot, history, done_q=None, limit=20):
         }
     if done_q:
         q["done"] = {"type": "noul", "instructions": done_q}
-    t0 = time.monotonic()
+    t0 = time.perf_counter()
     ans = predictor.predict(laya_state(snapshot, history), q)["answers"]
     d = {"fingerprint": snapshot.fingerprint, "operation": ans["operation"]["choice"],
          "op_confidence": round(float(ans["operation"]["confidence"]), 3),
@@ -85,7 +111,7 @@ def decide(predictor, goal, snapshot, history, done_q=None, limit=20):
         d["target_confidence"] = round(float(ans["target"]["confidence"]), 3)
     if done_q:
         d["p_done"] = round(float(ans["done"]["noul"]), 3)
-    d["ms"] = round((time.monotonic() - t0) * 1000)
+    d["ms"] = round((time.perf_counter() - t0) * 1000)
     return d
 
 

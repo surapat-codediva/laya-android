@@ -3,8 +3,10 @@
 One file per run. Every line has `version`, `run_id`, `event`, `timestamp`, `goal`. Events:
   start  -- once, run options
   step   -- before snapshot, model_decision (Laya), teacher_action (host override), executed,
-            policy, after fingerprint, outcome
-  end    -- result and reason
+            policy, after fingerprint, outcome; optionally timing_ms (observe/decision/policy/
+            execute/settle/total), adb_calls (of which dumps, probes), laya_calls and settle
+            (status, polls, ms)
+  end    -- result and reason; optionally metrics (run-level timing summary)
 Secrets are never written: password fields carry no text, and typed text is "[REDACTED]" when
 the target is a password/PIN/OTP field or the text looks like a PIN or code. New optional
 fields (e.g. before.screenshot) can be added without bumping `version`; renames bump it.
@@ -89,8 +91,11 @@ def model_decision_record(d):
     return out
 
 
+OPTIONAL_STEP_FIELDS = ("timing_ms", "adb_calls", "laya_calls", "dumps", "probes", "settle")
+
+
 def step_record(step, actor, before=None, history=(), model_decision=None, teacher_action=None, executed=None,
-                policy=None, after=None, outcome=None, note=None):
+                policy=None, after=None, outcome=None, note=None, **optional):
     """One step. `actor` is "laya" (Laya chose, the run executed) or "agent" (the host chose --
     a teacher label wherever model_decision is present and differs)."""
     rec = {
@@ -107,6 +112,12 @@ def step_record(step, actor, before=None, history=(), model_decision=None, teach
     }
     if note:
         rec["note"] = note
+    for k in OPTIONAL_STEP_FIELDS:  # additive, so `version` stays 1
+        if optional.get(k) is not None:
+            rec[k] = optional[k]
+    unknown = set(optional) - set(OPTIONAL_STEP_FIELDS)
+    if unknown:
+        raise TypeError("unknown step fields: %s" % ", ".join(sorted(unknown)))
     return rec
 
 
@@ -148,8 +159,11 @@ class TrajectoryRecorder:
     def step(self, *args, **kw):
         return self.write(step_record(*args, **kw))
 
-    def end(self, result, reason):
-        return self.write({"event": "end", "result": result, "reason": reason})
+    def end(self, result, reason, metrics=None):
+        rec = {"event": "end", "result": result, "reason": reason}
+        if metrics:
+            rec["metrics"] = metrics
+        return self.write(rec)
 
 
 def read(path):

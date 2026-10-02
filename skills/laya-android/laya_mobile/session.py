@@ -1,5 +1,6 @@
 """Per-device CLI state between invocations: the last snapshot shown (so `tap N` refers to it),
-the goal, the action history, Laya's last decision and where the run is recorded, if anywhere."""
+the goal, the action history, Laya's last decision, where the run is recorded, if anywhere, and
+the cached device info (screen size, density), so no command queries it again."""
 from __future__ import annotations
 
 import json
@@ -7,6 +8,7 @@ import os
 import re
 import tempfile
 
+from .adb import DeviceInfo
 from .models import MobileSnapshot
 from .trajectory import TrajectoryRecorder, new_run_id
 
@@ -27,6 +29,7 @@ class Session:
         self.laya = d.get("laya")
         self.trajectory = d.get("trajectory")  # JSONL path when recording
         self.step = d.get("step", 0)
+        self.device = d.get("device")  # cached DeviceInfo dict: screen size, density, status bar
 
     @classmethod
     def load(cls, serial):
@@ -40,7 +43,7 @@ class Session:
         p = path(self.serial)
         d = {"id": self.id, "goal": self.goal, "history": self.history,
              "obs": self.obs.to_dict() if self.obs else None, "acted": self.acted, "laya": self.laya,
-             "trajectory": self.trajectory, "step": self.step}
+             "trajectory": self.trajectory, "step": self.step, "device": self.device}
         with open(p + ".tmp", "w", encoding="utf-8") as f:
             json.dump(d, f, ensure_ascii=False)
         os.replace(p + ".tmp", p)
@@ -57,6 +60,16 @@ class Session:
 
     def finish(self):
         self.id, self.goal, self.history, self.laya, self.step, self.trajectory = new_run_id(), None, [], None, 0, None
+
+    def device_info(self):
+        return DeviceInfo.from_dict(self.device) if self.device else None
+
+    def remember_device(self, device):
+        """Keep what the device session learned (one `wm size` per device, not per command)."""
+        info = getattr(device, "_info", None)
+        if info is not None and info.to_dict() != self.device:
+            self.device = info.to_dict()
+            self.save()
 
     def recorder(self):
         return TrajectoryRecorder(self.trajectory, self.id, self.goal) if self.trajectory and self.goal else None
