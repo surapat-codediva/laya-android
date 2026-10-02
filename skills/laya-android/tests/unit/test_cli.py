@@ -283,6 +283,13 @@ def test_no_daemon_flag_uses_in_process_laya(device, monkeypatch, capsys):
     assert seen == [("en", False), ("ml", True)]
 
 
+def test_version(capsys):
+    from laya_mobile import __version__
+    with pytest.raises(SystemExit) as e:
+        cli.main(["--version"])
+    assert e.value.code == 0 and capsys.readouterr().out.strip() == "laya-android %s" % __version__
+
+
 def test_daemon_status_and_stop_need_no_device(monkeypatch, capsys):
     monkeypatch.setattr(cli.adb_mod, "pick_serial", lambda *a: pytest.fail("no device needed"))
     code, out, _ = run(capsys, "daemon", "status")

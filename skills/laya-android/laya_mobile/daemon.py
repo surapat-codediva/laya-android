@@ -33,7 +33,7 @@ import sys
 import threading
 import time
 
-from . import config
+from . import __version__, config
 from .errors import LayaAndroidError
 from .trajectory import data_dir
 
@@ -272,7 +272,7 @@ class LayaDaemon:
         return self.models[name]
 
     def status(self, model=None):
-        d = {"daemon": "running", "pid": os.getpid(), "protocol": PROTOCOL, "socket": self.paths.sock,
+        d = {"daemon": "running", "version": __version__, "pid": os.getpid(), "protocol": PROTOCOL, "socket": self.paths.sock,
              "uptime_s": round(time.time() - self.started, 1), "requests": self.requests, "predicts": self.predicts,
              "models_loaded": sorted(self.models), "models": self.model_info,
              "idle_exit_s": self.idle_exit}

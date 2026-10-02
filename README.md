@@ -35,6 +35,7 @@ bash skills/laya-android/la run "open Wi-Fi settings" --until-text "Wi-Fi prefer
 bash skills/laya-android/la -v run "..."        # diagnostics and per-step timings on stderr
 bash skills/laya-android/la daemon status        # the persistent Laya daemon (started automatically)
 bash skills/laya-android/la benchmark --step     # measure Laya, adb, observation and settle latency
+bash skills/laya-android/la --version            # laya-android 0.3.0
 ```
 
 See [`skills/laya-android/SKILL.md`](skills/laya-android/SKILL.md) for all commands, the
@@ -217,7 +218,7 @@ detection, timing aggregation and the adb layer. Architectural regression tests 
 step makes one Laya request, that swipes do not query the screen size, that settle polls never
 re-dump, and that the daemon loads a model once.
 
-## Changes in Phase 3
+## Changes in Phase 3 (v0.3.0)
 
 - Laya runs in a local daemon that starts on demand. There are new `daemon` and `benchmark`
   commands, and a global `--no-daemon` flag.

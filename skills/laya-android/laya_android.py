@@ -18,6 +18,7 @@ import logging
 import os
 import sys
 
+from laya_mobile import __version__
 from laya_mobile import adb as adb_mod
 from laya_mobile.checks import conditions, unmet
 from laya_mobile.config import SettleConfig
@@ -319,6 +320,7 @@ def cmd_benchmark(a):
 
 def parser():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--version", action="version", version="laya-android %s" % __version__)
     ap.add_argument("-s", "--serial", default=os.environ.get("ANDROID_SERIAL"), help="adb device serial")
     ap.add_argument("--model", choices=["ml", "en"], default="ml",
                     help="Laya checkpoint: ml = multilingual (Thai OK, default), en = English")

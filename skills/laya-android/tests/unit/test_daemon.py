@@ -83,7 +83,7 @@ def test_request_response_and_model_loaded_once(served):
         assert r["answers"]["op"] == {"choice": "CLICK", "confidence": 0.9}
     assert d.loads == ["ml"]  # loaded once, not per request
     st = c.status("ml")
-    assert st["daemon"] == "running" and st["model_loaded"] and st["models_loaded"] == ["ml"]
+    assert st["daemon"] == "running" and st["model_loaded"] and st["version"] == dm.__version__ and st["models_loaded"] == ["ml"]
     assert st["requests"] >= 4 and "warmup_ms" in st["models"]["ml"] and "load_s" in st["models"]["ml"]
 
 
